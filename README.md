@@ -1,16 +1,26 @@
-# timetable_app
+# HUTECH Timetable App (timetable_app)
 
-A new Flutter project.
+App thời khóa biểu + lịch thi + hỏi đáp (offline) viết bằng Flutter.
+Dữ liệu lưu cục bộ bằng SQLite (sqflite).
 
-## Getting Started
+## Tính năng
+- Trang Home: truy cập nhanh (TKB / Lịch thi / Hỏi đáp)
+- Thời khóa biểu theo tuần/học kỳ
+- Lịch thi
+- Chat hỏi đáp (FAQ + câu hỏi học tập)
+- Hồ sơ sinh viên: đổi họ tên, đổi avatar, đổi mật khẩu, cập nhật Gmail
 
-This project is a starting point for a Flutter application.
+## Tài khoản demo
+- ID: 123456
+- Password: 123456
 
-A few resources to get you started if this is your first Flutter project:
+## Yêu cầu môi trường
+- Flutter SDK (khuyến nghị stable)
+- Android Studio + Android SDK
+- Thiết bị ảo/điện thoại Android
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Cách chạy dự án
+### 1) Clone repo
+```bash
+git clone https://github.com/Godzilla192/timetable_app.git
+cd timetable_app

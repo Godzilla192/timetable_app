@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/semester_service.dart';
 import '../services/timetable_service.dart';
+import 'widgets/timetable_grid.dart';
 
 class TimetablePage extends StatefulWidget {
   final String userId;
@@ -14,34 +15,35 @@ class _TimetablePageState extends State<TimetablePage> {
   final _semesterService = SemesterService();
   final _service = TimetableService();
 
+  bool _loading = true;
   List<Map<String, Object?>> _semesters = [];
   int? _semesterId;
+
   int _week = 1;
-
   List<Map<String, Object?>> _items = [];
-  bool _loading = true;
 
-  static const _days = <int, String>{
-    1: 'Thứ 2',
-    2: 'Thứ 3',
-    3: 'Thứ 4',
-    4: 'Thứ 5',
-    5: 'Thứ 6',
-    6: 'Thứ 7',
-    7: 'CN',
+  final _days = const <int, String>{
+    2: 'T2',
+    3: 'T3',
+    4: 'T4',
+    5: 'T5',
+    6: 'T6',
+    7: 'T7',
+    8: 'CN',
   };
 
   @override
   void initState() {
     super.initState();
-    _loadSemesters();
+    _init();
   }
 
-  Future<void> _loadSemesters() async {
-    setState(() => _loading = true);
+  Future<void> _init() async {
     final semesters = await _semesterService.getSemesters();
-    _semesters = semesters;
-    _semesterId ??= semesters.isNotEmpty ? (semesters.first['id'] as int) : null;
+    setState(() {
+      _semesters = semesters;
+      _semesterId = semesters.isNotEmpty ? (semesters.first['id'] as int) : null;
+    });
     await _loadItems();
   }
 
@@ -53,18 +55,25 @@ class _TimetablePageState extends State<TimetablePage> {
       });
       return;
     }
+
+    setState(() => _loading = true);
+
     final rows = await _service.getItems(
-      userId: widget.userId,
       semesterId: _semesterId!,
       week: _week,
     );
+
     setState(() {
       _items = rows;
       _loading = false;
     });
   }
 
-  Future<void> _openEditor({Map<String, Object?>? existing}) async {
+  Future<void> _openEditor({
+    Map<String, Object?>? existing,
+    int? presetDay,
+    int? presetPeriod,
+  }) async {
     if (_semesterId == null) return;
 
     final subjectCtrl = TextEditingController(text: existing?['subject'] as String? ?? '');
@@ -72,8 +81,14 @@ class _TimetablePageState extends State<TimetablePage> {
     final teacherCtrl = TextEditingController(text: existing?['teacher'] as String? ?? '');
     final noteCtrl = TextEditingController(text: existing?['note'] as String? ?? '');
 
-    int day = (existing?['day'] as int?) ?? 1;
-    int period = (existing?['period'] as int?) ?? 1;
+    // Focus để nhảy ô, giúp gõ tiếng Việt ổn định hơn + UX tốt
+    final focusSubject = FocusNode();
+    final focusTeacher = FocusNode();
+    final focusRoom = FocusNode();
+    final focusNote = FocusNode();
+
+    int day = (existing?['day'] as int?) ?? presetDay ?? 2;
+    int period = (existing?['period'] as int?) ?? presetPeriod ?? 1;
 
     final saved = await showDialog<bool>(
       context: context,
@@ -86,7 +101,24 @@ class _TimetablePageState extends State<TimetablePage> {
               children: [
                 TextField(
                   controller: subjectCtrl,
+                  focusNode: focusSubject,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: true,
+                  enableSuggestions: true,
                   decoration: const InputDecoration(labelText: 'Môn học'),
+                  onSubmitted: (_) => focusTeacher.requestFocus(),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: teacherCtrl,
+                  focusNode: focusTeacher,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: true,
+                  enableSuggestions: true,
+                  decoration: const InputDecoration(labelText: 'Giảng viên'),
+                  onSubmitted: (_) => focusRoom.requestFocus(),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -117,16 +149,22 @@ class _TimetablePageState extends State<TimetablePage> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: roomCtrl,
-                  decoration: const InputDecoration(labelText: 'Phòng'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: teacherCtrl,
-                  decoration: const InputDecoration(labelText: 'Giảng viên'),
+                  focusNode: focusRoom,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: true,
+                  enableSuggestions: true,
+                  decoration: const InputDecoration(labelText: 'Phòng / Link học'),
+                  onSubmitted: (_) => focusNote.requestFocus(),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: noteCtrl,
+                  focusNode: focusNote,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.done,
+                  autocorrect: true,
+                  enableSuggestions: true,
                   decoration: const InputDecoration(labelText: 'Ghi chú'),
                 ),
               ],
@@ -146,6 +184,12 @@ class _TimetablePageState extends State<TimetablePage> {
       },
     );
 
+    // cleanup FocusNode
+    focusSubject.dispose();
+    focusTeacher.dispose();
+    focusRoom.dispose();
+    focusNote.dispose();
+
     if (saved != true) return;
 
     final data = <String, Object?>{
@@ -160,16 +204,27 @@ class _TimetablePageState extends State<TimetablePage> {
       'note': noteCtrl.text.trim(),
     };
 
+    final conflict = await _service.hasConflict(
+      semesterId: _semesterId!,
+      week: _week,
+      day: day,
+      period: period,
+      excludeId: existing?['id'] as int?,
+    );
+
+    if (conflict) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Trùng lịch: đã có môn ở thứ/tiết này')),
+      );
+      return;
+    }
+
     if (existing == null) {
       await _service.addItem(data);
     } else {
       await _service.updateItem(existing['id'] as int, data);
     }
-    await _loadItems();
-  }
-
-  Future<void> _deleteItem(int id) async {
-    await _service.deleteItem(id);
     await _loadItems();
   }
 
@@ -190,6 +245,7 @@ class _TimetablePageState extends State<TimetablePage> {
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -204,12 +260,12 @@ class _TimetablePageState extends State<TimetablePage> {
                     decoration: const InputDecoration(labelText: 'Học kỳ'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 SizedBox(
                   width: 130,
                   child: DropdownButtonFormField<int>(
                     value: _week,
-                    items: List.generate(20, (i) => i + 1)
+                    items: List.generate(30, (i) => i + 1)
                         .map((w) => DropdownMenuItem(value: w, child: Text('Tuần $w')))
                         .toList(),
                     onChanged: (v) async {
@@ -222,38 +278,19 @@ class _TimetablePageState extends State<TimetablePage> {
               ],
             ),
             const SizedBox(height: 12),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _items.isEmpty
-                  ? const Center(child: Text('Chưa có thời khóa biểu tuần này'))
-                  : ListView.separated(
-                itemCount: _items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, i) {
-                  final it = _items[i];
-                  final day = _days[it['day'] as int] ?? 'Thứ ?';
-                  final period = it['period'] as int;
-                  final subject = it['subject'] as String;
-                  final room = (it['room'] as String?) ?? '';
-                  final teacher = (it['teacher'] as String?) ?? '';
-                  final note = (it['note'] as String?) ?? '';
-                  return ListTile(
-                    title: Text('$day • Tiết $period • $subject'),
-                    subtitle: Text([
-                      if (room.isNotEmpty) 'Phòng: $room',
-                      if (teacher.isNotEmpty) 'GV: $teacher',
-                      if (note.isNotEmpty) 'Note: $note',
-                    ].join('  |  ')),
-                    onTap: () => _openEditor(existing: it),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _deleteItem(it['id'] as int),
-                    ),
-                  );
-                },
+            if (_loading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(
+                child: TimeTableGrid(
+                  items: _items,
+                  days: _days,
+                  periods: 12,
+                  onTapCell: (existing, day, period) {
+                    _openEditor(existing: existing, presetDay: day, presetPeriod: period);
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),

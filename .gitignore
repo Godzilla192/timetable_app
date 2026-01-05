@@ -1,4 +1,6 @@
-# ===== Flutter / Dart =====
+# ==============================
+# Flutter / Dart
+# ==============================
 .dart_tool/
 .packages
 .pub/
@@ -7,34 +9,42 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 
-# ===== IDE / Editor =====
+# ==============================
+# IDE / Editor
+# ==============================
 .idea/
 .vscode/
 *.iml
 *.ipr
 *.iws
 
-# ===== OS =====
+# ==============================
+# OS
+# ==============================
 .DS_Store
 Thumbs.db
 
-# ===== Logs =====
+# ==============================
+# Logs
+# ==============================
 *.log
 
-# ===== Android =====
+# ==============================
+# Android
+# ==============================
 android/.gradle/
 android/local.properties
-android/key.properties
-android/**/key.properties
-android/**/GeneratedPluginRegistrant.java
-android/**/GeneratedPluginRegistrant.*
 android/**/build/
 
-# Keystore
+# Keystore (KHÔNG BAO GIỜ COMMIT)
 *.jks
 *.keystore
+android/key.properties
+android/**/key.properties
 
-# ===== iOS / macOS =====
+# ==============================
+# iOS / macOS
+# ==============================
 ios/Pods/
 ios/.symlinks/
 ios/Flutter/ephemeral/
@@ -47,9 +57,14 @@ ios/Runner/GeneratedPluginRegistrant.*
 macos/Pods/
 macos/Flutter/ephemeral/
 
-# ===== Windows / Linux =====
+# ==============================
+# Windows / Linux
+# ==============================
 windows/flutter/ephemeral/
 linux/flutter/ephemeral/
 
-# ===== Archives =====
-*.zip
+# ==============================
+# OPTIONAL
+# ==============================
+# KHÔNG ignore file zip để nộp bài / chuyển máy
+# *.zip
