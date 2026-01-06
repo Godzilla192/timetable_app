@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
-import 'services/auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'firebase_options.dart';
 import 'ui/login_page.dart';
 import 'ui/shell_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const TimetableApp());
 }
 
@@ -24,38 +31,40 @@ class TimetableApp extends StatelessWidget {
   }
 }
 
-class _Bootstrapper extends StatefulWidget {
+class _Bootstrapper extends StatelessWidget {
   const _Bootstrapper();
 
   @override
-  State<_Bootstrapper> createState() => _BootstrapperState();
-}
-
-class _BootstrapperState extends State<_Bootstrapper> {
-  final _auth = AuthService();
-  String? _uid;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final id = await _auth.getCurrentUserId();
-    setState(() => _uid = id);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_uid == null) {
-      return LoginPage(
-        onLoggedIn: (id) => setState(() => _uid = id),
-      );
-    }
-    return ShellPage(
-      userId: _uid!,
-      onLoggedOut: () => setState(() => _uid = null),
+    // Lắng nghe trạng thái đăng nhập FirebaseAuth
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snap) {
+        // Đang load trạng thái đăng nhập
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = snap.data;
+        if (user == null) {
+          // Chưa đăng nhập
+          return LoginPage(
+            onLoggedIn: (_) {
+              // Không cần setState nữa vì authStateChanges sẽ tự cập nhật UI
+            },
+          );
+        }
+
+        // Đã đăng nhập
+        return ShellPage(
+          userId: user.uid,
+          onLoggedOut: () async {
+            await FirebaseAuth.instance.signOut();
+          },
+        );
+      },
     );
   }
 }

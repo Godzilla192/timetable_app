@@ -10,12 +10,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Firebase (Auth + Firestore)
+  firebase_core: ^4.3.0
+  firebase_auth: ^6.1.3
+  cloud_firestore: ^6.1.1
+
+  # Image/avatar
+  image_picker: ^1.1.2
+
+  # Local / legacy (còn file SQLite cũ đang dùng nên tạm giữ)
   sqflite: ^2.3.3
   path: ^1.9.0
+  path_provider: ^2.1.4
   shared_preferences: ^2.2.3
   crypto: ^3.0.3
-  image_picker: ^1.1.2
-  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:

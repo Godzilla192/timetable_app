@@ -42,6 +42,10 @@ android/**/build/
 android/key.properties
 android/**/key.properties
 
+# Firebase (không commit file nhạy cảm)
+android/app/google-services.json
+lib/firebase_options.dart
+
 # ==============================
 # iOS / macOS
 # ==============================
