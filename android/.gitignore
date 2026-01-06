@@ -1,16 +1,25 @@
+# Gradle
+.gradle/
 gradle-wrapper.jar
-/.gradle
-/captures/
 /gradlew
 /gradlew.bat
-/local.properties
-GeneratedPluginRegistrant.java
+
+# Android build
+/build/
+/captures/
 .cxx/
 
-# Remember to never publicly share your keystore.
-# See https://flutter.dev/to/reference-keystore
+# Local config (KHÔNG COMMIT)
+local.properties
+
+# Generated files
+GeneratedPluginRegistrant.java
+
+# Keystore (TUYỆT ĐỐI KHÔNG COMMIT)
 key.properties
 **/*.keystore
 **/*.jks
-firebase.json
-.firebaserc
+
+# Firebase (KHÔNG để trong android/.gitignore)
+# firebase.json
+# .firebaserc
